@@ -133,7 +133,7 @@ export default function Home() {
               Why use a professional invoice template?
             </h2>
             <p className="text-sm text-green-800 dark:text-green-400 leading-relaxed">
-              A professional invoice is a legally significant document that serves as formal notification of payment owed. Proper invoices include unique invoice numbers for your records, clearly itemized services or goods with quantities and rates, applicable taxes, payment terms that establish the due date and any late payment penalties, and complete contact information for both parties. This free invoice generator creates PDF invoices that meet professional standards — the same format used by established businesses and independent contractors. All invoice data stays private in your browser and is never stored on any server.
+              A professional invoice is a legally binding document and serves as formal written notice of payment owed between parties. Proper invoices include unique invoice numbers for your records, clearly itemized services or goods with quantities and rates, applicable taxes, and payment terms that establish the due date, governing payment obligations, and any late payment penalties. A well-drafted invoice — like any enforceable commercial agreement — includes complete contact information, a clear description of services rendered, and the total amount due. This free invoice generator creates PDF invoices that meet professional standards — the same format used by established businesses and independent contractors. All invoice data is processed entirely in your browser and is never transmitted to any server.
             </p>
           </div>
 

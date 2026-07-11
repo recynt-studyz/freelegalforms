@@ -283,7 +283,7 @@ export default function ContractorAgreementGenerator() {
       doc.text(`Page ${i} of ${totalPages} — Independent Contractor Agreement — freelegalforms.app`, 105, 293, { align: 'center' })
     }
 
-    doc.save('independent-contractor-agreement.pdf')
+    doc.save('contractor-agreement.pdf')
   }
 
   return (

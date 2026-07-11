@@ -255,7 +255,7 @@ export default function NDAGenerator() {
       doc.text(`Page ${i} of ${totalPages} — Non-Disclosure Agreement — freelegalforms.app`, 105, 293, { align: 'center' })
     }
 
-    doc.save('non-disclosure-agreement.pdf')
+    doc.save('nda-agreement.pdf')
   }
 
   const tabCls = (active: boolean) =>
