@@ -1,10 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, ChangeEvent } from 'react'
 import jsPDF from 'jspdf'
 
 const STORAGE_KEY = 'flf-lease'
 const COLOR_KEY = 'flf-lease-color'
+const LOGO_KEY = 'flf-lease-logo'
+const TEMPLATES_KEY = 'flf-lease-templates'
+
+interface Template {
+  name: string
+  date: string
+  data: Record<string, unknown>
+}
 
 const US_STATES = [
   'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware',
@@ -51,6 +59,12 @@ export default function LeaseAgreementGenerator() {
   const [smoking, setSmoking] = useState('Not allowed')
   const [additionalTerms, setAdditionalTerms] = useState('')
   const [brandColor, setBrandColor] = useState('#16a34a')
+  const [logoDataUrl, setLogoDataUrl] = useState('')
+  const [logoError, setLogoError] = useState('')
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [templateName, setTemplateName] = useState('')
+  const [showSaveInput, setShowSaveInput] = useState(false)
+  const [showTemplates, setShowTemplates] = useState(false)
 
   useEffect(() => {
     try {
@@ -88,11 +102,93 @@ export default function LeaseAgreementGenerator() {
       const c = localStorage.getItem(COLOR_KEY)
       if (c) setBrandColor(c)
     } catch { /* ignore */ }
+    try {
+      const logo = localStorage.getItem(LOGO_KEY)
+      if (logo) setLogoDataUrl(logo)
+    } catch { /* ignore */ }
+    try {
+      const tmpl = localStorage.getItem(TEMPLATES_KEY)
+      if (tmpl) setTemplates(JSON.parse(tmpl))
+    } catch { /* ignore */ }
   }, [])
 
   const setColor = (hex: string) => {
     setBrandColor(hex)
     try { localStorage.setItem(COLOR_KEY, hex) } catch { /* ignore */ }
+  }
+
+  const handleLogoUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLogoError('')
+    if (file.size > 2 * 1024 * 1024) { setLogoError('Logo must be under 2MB'); return }
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const url = ev.target?.result as string
+      setLogoDataUrl(url)
+      try { if (url.length < 500 * 1024) localStorage.setItem(LOGO_KEY, url) } catch { /* ignore */ }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeLogo = () => {
+    setLogoDataUrl(''); setLogoError('')
+    try { localStorage.removeItem(LOGO_KEY) } catch { /* ignore */ }
+  }
+
+  const getFormData = () => ({
+    propAddress, propType, propState, landlordName, landlordAddress, landlordPhone, landlordEmail,
+    tenant1, tenant2, tenant3, leaseType, startDate, endDate, monthlyRent, securityDeposit,
+    lateFee, gracePeriod, rentDueDay, utilities, petsAllowed, petDeposit, parkingIncluded,
+    parkingDesc, smoking, additionalTerms, brandColor,
+  })
+
+  const saveTemplate = () => {
+    if (!templateName.trim()) return
+    const t: Template = { name: templateName.trim(), date: new Date().toLocaleDateString(), data: getFormData() }
+    const updated = [...templates, t].slice(-10)
+    setTemplates(updated)
+    try { localStorage.setItem(TEMPLATES_KEY, JSON.stringify(updated)) } catch { /* ignore */ }
+    setTemplateName(''); setShowSaveInput(false)
+  }
+
+  const loadTemplate = (t: Template) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const p = t.data as any
+    if (p.propAddress !== undefined) setPropAddress(p.propAddress)
+    if (p.propType) setPropType(p.propType)
+    if (p.propState) setPropState(p.propState)
+    if (p.landlordName !== undefined) setLandlordName(p.landlordName)
+    if (p.landlordAddress !== undefined) setLandlordAddress(p.landlordAddress)
+    if (p.landlordPhone !== undefined) setLandlordPhone(p.landlordPhone)
+    if (p.landlordEmail !== undefined) setLandlordEmail(p.landlordEmail)
+    if (p.tenant1 !== undefined) setTenant1(p.tenant1)
+    if (p.tenant2 !== undefined) setTenant2(p.tenant2)
+    if (p.tenant3 !== undefined) setTenant3(p.tenant3)
+    if (p.leaseType) setLeaseType(p.leaseType)
+    if (p.startDate) setStartDate(p.startDate)
+    if (p.endDate !== undefined) setEndDate(p.endDate)
+    if (p.monthlyRent !== undefined) setMonthlyRent(p.monthlyRent)
+    if (p.securityDeposit !== undefined) setSecurityDeposit(p.securityDeposit)
+    if (p.lateFee !== undefined) setLateFee(p.lateFee)
+    if (p.gracePeriod !== undefined) setGracePeriod(p.gracePeriod)
+    if (p.rentDueDay !== undefined) setRentDueDay(p.rentDueDay)
+    if (p.utilities) setUtilities(p.utilities)
+    if (p.petsAllowed !== undefined) setPetsAllowed(p.petsAllowed)
+    if (p.petDeposit !== undefined) setPetDeposit(p.petDeposit)
+    if (p.parkingIncluded !== undefined) setParkingIncluded(p.parkingIncluded)
+    if (p.parkingDesc !== undefined) setParkingDesc(p.parkingDesc)
+    if (p.smoking) setSmoking(p.smoking)
+    if (p.additionalTerms !== undefined) setAdditionalTerms(p.additionalTerms)
+    if (p.brandColor) setColor(p.brandColor)
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)) } catch { /* ignore */ }
+    setShowTemplates(false)
+  }
+
+  const deleteTemplate = (i: number) => {
+    const updated = templates.filter((_, idx) => idx !== i)
+    setTemplates(updated)
+    try { localStorage.setItem(TEMPLATES_KEY, JSON.stringify(updated)) } catch { /* ignore */ }
   }
 
   const save = useCallback((updates: Record<string, unknown>) => {
@@ -156,6 +252,15 @@ export default function LeaseAgreementGenerator() {
     doc.text('freelegalforms.app — Free Legal Document Generator', 105, 8, { align: 'center' })
 
     y = 22
+
+    // Logo (below header bar, left-aligned)
+    if (logoDataUrl) {
+      try {
+        const imgFmt = logoDataUrl.split(';')[0].split('/')[1]?.toUpperCase() || 'PNG'
+        doc.addImage(logoDataUrl, imgFmt === 'SVG+XML' ? 'PNG' : imgFmt, margin, y, 40, 18)
+        y += 24
+      } catch { /* skip logo if format unsupported */ }
+    }
 
     // Title
     addText('RESIDENTIAL LEASE AGREEMENT', { bold: true, size: 16, color: [cr, cg, cb], center: true })
@@ -349,6 +454,24 @@ export default function LeaseAgreementGenerator() {
             <span className="text-sm font-mono text-gray-600 dark:text-gray-400">{brandColor.toUpperCase()}</span>
           </div>
 
+          {/* Logo Upload */}
+          <div className="mb-5 p-3 rounded-lg bg-gray-50 dark:bg-[#1e293b] border border-gray-200 dark:border-gray-600">
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block mb-2">Logo</span>
+            {logoDataUrl ? (
+              <div className="flex items-center gap-3">
+                <img src={logoDataUrl} alt="Logo preview" className="h-12 object-contain rounded border border-gray-200 dark:border-gray-600" />
+                <button onClick={removeLogo} className="text-xs text-red-500 hover:text-red-700 font-medium">Remove</button>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 hover:border-green-500 transition-colors">
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <span>Upload logo (PNG, JPG, WebP — max 2MB)</span>
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={handleLogoUpload} />
+              </label>
+            )}
+            {logoError && <p className="text-xs text-red-500 mt-1">{logoError}</p>}
+          </div>
+
           <p className={sectionCls}>Property</p>
           <div className="space-y-3">
             <div>
@@ -527,6 +650,56 @@ export default function LeaseAgreementGenerator() {
           <p className={sectionCls}>Additional Terms</p>
           <div>
             <textarea className={`${inputCls} resize-none`} rows={4} value={additionalTerms} onChange={e => { setAdditionalTerms(e.target.value); save({ additionalTerms: e.target.value }) }} placeholder="Any additional terms, rules, or conditions..." />
+          </div>
+
+          {/* Templates Accordion */}
+          <div className="mt-6 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <button
+              onClick={() => setShowTemplates(!showTemplates)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-[#1e293b] text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#273548] transition-colors"
+            >
+              <span>Saved Templates ({templates.length}/10)</span>
+              <span className="text-gray-400">{showTemplates ? '▼' : '▶'}</span>
+            </button>
+            {showTemplates && (
+              <div className="p-4 space-y-3 bg-white dark:bg-[#0f1923]">
+                {showSaveInput ? (
+                  <div className="flex gap-2">
+                    <input
+                      className="flex-1 text-sm px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e293b] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Template name..."
+                      value={templateName}
+                      onChange={e => setTemplateName(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && saveTemplate()}
+                      autoFocus
+                    />
+                    <button onClick={saveTemplate} className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg">Save</button>
+                    <button onClick={() => { setShowSaveInput(false); setTemplateName('') }} className="px-3 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm rounded-lg border border-gray-300 dark:border-gray-600">Cancel</button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowSaveInput(true)}
+                    disabled={templates.length >= 10}
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-green-500 hover:text-green-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    + Save current form as template
+                  </button>
+                )}
+                {templates.length === 0 && (
+                  <p className="text-xs text-gray-400 text-center py-2">No saved templates yet</p>
+                )}
+                {templates.map((t, i) => (
+                  <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-[#1e293b] text-sm">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-800 dark:text-gray-200 truncate">{t.name}</p>
+                      <p className="text-xs text-gray-400">{t.date}</p>
+                    </div>
+                    <button onClick={() => loadTemplate(t)} className="text-xs text-green-600 hover:text-green-700 dark:text-green-400 font-medium shrink-0">Load</button>
+                    <button onClick={() => deleteTemplate(i)} className="text-xs text-red-400 hover:text-red-600 shrink-0">Delete</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
