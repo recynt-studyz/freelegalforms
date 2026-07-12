@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import jsPDF from 'jspdf'
 
 const STORAGE_KEY = 'flf-contractor'
+const COLOR_KEY = 'flf-contractor-color'
 
 const US_STATES = [
   'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware',
@@ -40,6 +41,7 @@ export default function ContractorAgreementGenerator() {
   const [nonCompeteDuration, setNonCompeteDuration] = useState('1')
   const [nonSolicitation, setNonSolicitation] = useState(false)
   const [governingLaw, setGoverningLaw] = useState('California')
+  const [brandColor, setBrandColor] = useState('#16a34a')
 
   useEffect(() => {
     try {
@@ -68,7 +70,16 @@ export default function ContractorAgreementGenerator() {
         if (p.governingLaw) setGoverningLaw(p.governingLaw)
       }
     } catch { /* ignore */ }
+    try {
+      const c = localStorage.getItem(COLOR_KEY)
+      if (c) setBrandColor(c)
+    } catch { /* ignore */ }
   }, [])
+
+  const setColor = (hex: string) => {
+    setBrandColor(hex)
+    try { localStorage.setItem(COLOR_KEY, hex) } catch { /* ignore */ }
+  }
 
   const save = useCallback((updates: Record<string, unknown>) => {
     try {
@@ -90,6 +101,9 @@ export default function ContractorAgreementGenerator() {
 
   const generatePDF = () => {
     const doc = new jsPDF()
+    const cr = parseInt(brandColor.slice(1, 3), 16)
+    const cg = parseInt(brandColor.slice(3, 5), 16)
+    const cb = parseInt(brandColor.slice(5, 7), 16)
     doc.setFont('helvetica')
     const margin = 20
     const rightEdge = 190
@@ -110,13 +124,13 @@ export default function ContractorAgreementGenerator() {
 
     function addSection(num: string, title: string, body: string) {
       if (y > 258) { doc.addPage(); y = 20 }
-      addText(`${num}. ${title}`, { bold: true, size: 9, color: [22, 101, 52] })
+      addText(`${num}. ${title}`, { bold: true, size: 9, color: [cr, cg, cb] })
       addText(body, { size: 8.5, indent: 4 })
       y += 3
     }
 
     // Header
-    doc.setFillColor(22, 101, 52)
+    doc.setFillColor(cr, cg, cb)
     doc.rect(0, 0, 210, 12, 'F')
     doc.setTextColor(255, 255, 255)
     doc.setFontSize(7)
@@ -126,10 +140,10 @@ export default function ContractorAgreementGenerator() {
     y = 22
 
     // Title
-    addText('INDEPENDENT CONTRACTOR AGREEMENT', { bold: true, size: 16, color: [22, 101, 52], center: true })
+    addText('INDEPENDENT CONTRACTOR AGREEMENT', { bold: true, size: 16, color: [cr, cg, cb], center: true })
     y += 4
 
-    doc.setDrawColor(22, 101, 52)
+    doc.setDrawColor(cr, cg, cb)
     doc.line(margin, y, rightEdge, y)
     y += 6
 
@@ -224,7 +238,7 @@ export default function ContractorAgreementGenerator() {
 
     doc.setFontSize(8.5)
     doc.setFont('helvetica', 'bold')
-    doc.setTextColor(22, 101, 52)
+    doc.setTextColor(cr, cg, cb)
     doc.text('CLIENT', col1X, y)
     doc.text('CONTRACTOR', col2X, y)
     y += 5
@@ -291,6 +305,17 @@ export default function ContractorAgreementGenerator() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Form */}
         <div>
+          <div className="flex items-center gap-3 mb-5 p-3 rounded-lg bg-gray-50 dark:bg-[#1e293b] border border-gray-200 dark:border-gray-600">
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 shrink-0">Document Color</span>
+            <input
+              type="color"
+              value={brandColor}
+              onChange={e => setColor(e.target.value)}
+              className="w-8 h-8 rounded cursor-pointer border border-gray-200 dark:border-gray-600 p-0.5 bg-white dark:bg-[#1e293b]"
+            />
+            <span className="text-sm font-mono text-gray-600 dark:text-gray-400">{brandColor.toUpperCase()}</span>
+          </div>
+
           <p className={sectionCls}>Client Information</p>
           <div className="space-y-3">
             <div>
@@ -434,9 +459,9 @@ export default function ContractorAgreementGenerator() {
         {/* Preview + Generate */}
         <div className="lg:sticky lg:top-6 space-y-4 self-start">
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-            <div className="bg-green-800 px-5 py-4">
+            <div className="px-5 py-4" style={{ backgroundColor: brandColor }}>
               <p className="text-white font-bold text-center text-sm tracking-wider">INDEPENDENT CONTRACTOR AGREEMENT</p>
-              <p className="text-green-200 text-xs text-center mt-1">Effective: {startDate}</p>
+              <p className="text-white/70 text-xs text-center mt-1">Effective: {startDate}</p>
             </div>
             <div className="bg-gray-50 dark:bg-[#0f172a] p-5 space-y-4">
               <div className="grid grid-cols-2 gap-4">

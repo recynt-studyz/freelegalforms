@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import jsPDF from 'jspdf'
 
 const STORAGE_KEY = 'flf-invoice'
+const COLOR_KEY = 'flf-invoice-color'
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'] as const
 type Currency = typeof CURRENCIES[number]
@@ -66,6 +67,7 @@ export default function InvoiceGenerator() {
   const [discount, setDiscount] = useState('0')
   const [taxRate, setTaxRate] = useState('0')
   const [paymentTerms, setPaymentTerms] = useState('Net 30')
+  const [brandColor, setBrandColor] = useState('#16a34a')
   const [notes, setNotes] = useState('Thank you for your business!')
   const [items, setItems] = useState<LineItem[]>([
     { description: 'Services', quantity: '1', rate: '0' },
@@ -102,7 +104,16 @@ export default function InvoiceGenerator() {
         if (p.items) setItems(p.items)
       }
     } catch { /* ignore */ }
+    try {
+      const c = localStorage.getItem(COLOR_KEY)
+      if (c) setBrandColor(c)
+    } catch { /* ignore */ }
   }, [])
+
+  const setColor = (hex: string) => {
+    setBrandColor(hex)
+    try { localStorage.setItem(COLOR_KEY, hex) } catch { /* ignore */ }
+  }
 
   const save = useCallback((updates: Record<string, unknown>) => {
     try {
@@ -138,6 +149,9 @@ export default function InvoiceGenerator() {
 
   const generatePDF = () => {
     const doc = new jsPDF()
+    const cr = parseInt(brandColor.slice(1, 3), 16)
+    const cg = parseInt(brandColor.slice(3, 5), 16)
+    const cb = parseInt(brandColor.slice(5, 7), 16)
     doc.setFont('helvetica')
 
     const margin = 20
@@ -145,7 +159,7 @@ export default function InvoiceGenerator() {
     const rightEdge = pageW - margin
 
     // Header background
-    doc.setFillColor(22, 101, 52)
+    doc.setFillColor(cr, cg, cb)
     doc.rect(0, 0, pageW, 38, 'F')
 
     // FROM info (top left)
@@ -176,7 +190,7 @@ export default function InvoiceGenerator() {
     doc.text(`Due: ${fmtDate(dueDate)}`, rightEdge, 33, { align: 'right' })
 
     // BILL TO section
-    doc.setTextColor(22, 101, 52)
+    doc.setTextColor(cr, cg, cb)
     doc.setFontSize(8)
     doc.setFont('helvetica', 'bold')
     doc.text('BILL TO', margin, 50)
@@ -194,7 +208,7 @@ export default function InvoiceGenerator() {
     if (toEmail) { doc.text(toEmail, margin, toY) }
 
     // Payment terms (top right of BILL TO area)
-    doc.setTextColor(22, 101, 52)
+    doc.setTextColor(cr, cg, cb)
     doc.setFontSize(8)
     doc.setFont('helvetica', 'bold')
     doc.text('PAYMENT TERMS', rightEdge - 60, 50)
@@ -202,7 +216,7 @@ export default function InvoiceGenerator() {
     doc.setFont('helvetica', 'normal')
     doc.text(paymentTerms || 'Net 30', rightEdge - 60, 57)
     doc.setFont('helvetica', 'bold')
-    doc.setTextColor(22, 101, 52)
+    doc.setTextColor(cr, cg, cb)
     doc.text('CURRENCY', rightEdge - 60, 64)
     doc.setTextColor(30, 30, 30)
     doc.setFont('helvetica', 'normal')
@@ -214,7 +228,7 @@ export default function InvoiceGenerator() {
 
     // Table header
     const tableTop = 86
-    doc.setFillColor(22, 101, 52)
+    doc.setFillColor(cr, cg, cb)
     doc.rect(margin, tableTop, rightEdge - margin, 8, 'F')
     doc.setTextColor(255, 255, 255)
     doc.setFontSize(8)
@@ -285,10 +299,10 @@ export default function InvoiceGenerator() {
     })
 
     // Total line
-    doc.setDrawColor(22, 101, 52)
+    doc.setDrawColor(cr, cg, cb)
     doc.line(totalsX, rowY, totalsValX, rowY)
     rowY += 6
-    doc.setFillColor(22, 101, 52)
+    doc.setFillColor(cr, cg, cb)
     doc.rect(totalsX - 2, rowY - 4, totalsValX - totalsX + 4, 10, 'F')
     doc.setTextColor(255, 255, 255)
     doc.setFontSize(9)
@@ -300,7 +314,7 @@ export default function InvoiceGenerator() {
     // Notes
     if (notes) {
       if (rowY > 260) { doc.addPage(); rowY = 20 }
-      doc.setTextColor(22, 101, 52)
+      doc.setTextColor(cr, cg, cb)
       doc.setFontSize(8)
       doc.setFont('helvetica', 'bold')
       doc.text('NOTES & TERMS', margin, rowY)
@@ -330,6 +344,17 @@ export default function InvoiceGenerator() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Form */}
         <div>
+          <div className="flex items-center gap-3 mb-5 p-3 rounded-lg bg-gray-50 dark:bg-[#1e293b] border border-gray-200 dark:border-gray-600">
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 shrink-0">Brand Color</span>
+            <input
+              type="color"
+              value={brandColor}
+              onChange={e => setColor(e.target.value)}
+              className="w-8 h-8 rounded cursor-pointer border border-gray-200 dark:border-gray-600 p-0.5 bg-white dark:bg-[#1e293b]"
+            />
+            <span className="text-sm font-mono text-gray-600 dark:text-gray-400">{brandColor.toUpperCase()}</span>
+          </div>
+
           <p className={sectionCls}>Bill From</p>
           <div className="space-y-3">
             <div>
@@ -517,15 +542,15 @@ export default function InvoiceGenerator() {
         <div className="lg:sticky lg:top-6 space-y-4 self-start">
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
             {/* Preview header */}
-            <div className="bg-green-800 px-5 py-4">
+            <div className="px-5 py-4" style={{ backgroundColor: brandColor }}>
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-bold text-white text-sm">{fromName || 'Your Business'}</p>
-                  {fromEmail && <p className="text-green-200 text-xs mt-0.5">{fromEmail}</p>}
+                  {fromEmail && <p className="text-white/70 text-xs mt-0.5">{fromEmail}</p>}
                 </div>
                 <div className="text-right">
                   <p className="text-white font-bold text-lg tracking-wide">INVOICE</p>
-                  <p className="text-green-200 text-xs">{invoiceNumber}</p>
+                  <p className="text-white/70 text-xs">{invoiceNumber}</p>
                 </div>
               </div>
             </div>
@@ -555,7 +580,7 @@ export default function InvoiceGenerator() {
 
               {/* Mini line items */}
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                <div className="bg-green-700 text-white text-xs px-3 py-1.5 grid grid-cols-3">
+                <div className="text-white text-xs px-3 py-1.5 grid grid-cols-3" style={{ backgroundColor: brandColor }}>
                   <span>Description</span>
                   <span className="text-center">Qty</span>
                   <span className="text-right">Amount</span>
@@ -589,7 +614,7 @@ export default function InvoiceGenerator() {
                 )}
                 <div className="flex justify-between font-bold text-sm text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700 pt-2 mt-1">
                   <span>Total Due</span>
-                  <span className="text-green-700 dark:text-green-400 text-base">{fmtMoney(total, sym)}</span>
+                  <span className="text-base font-bold" style={{ color: brandColor }}>{fmtMoney(total, sym)}</span>
                 </div>
               </div>
             </div>
