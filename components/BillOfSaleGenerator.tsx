@@ -63,6 +63,7 @@ export default function BillOfSaleGenerator() {
   const [faSerial, setFaSerial] = useState('')
   const [faCalibер, setFaCalibер] = useState('')
   const [brandColor, setBrandColor] = useState('#16a34a')
+  const [hexInput, setHexInput] = useState('16A34A')
   const [logoDataUrl, setLogoDataUrl] = useState('')
   const [logoError, setLogoError] = useState('')
   const [templates, setTemplates] = useState<Template[]>([])
@@ -106,7 +107,7 @@ export default function BillOfSaleGenerator() {
     } catch { /* ignore */ }
     try {
       const c = localStorage.getItem(COLOR_KEY)
-      if (c) setBrandColor(c)
+      if (c) { setBrandColor(c); setHexInput(c.slice(1).toUpperCase()) }
     } catch { /* ignore */ }
     try {
       const logo = localStorage.getItem(LOGO_KEY)
@@ -120,7 +121,14 @@ export default function BillOfSaleGenerator() {
 
   const setColor = (hex: string) => {
     setBrandColor(hex)
+    setHexInput(hex.slice(1).toUpperCase())
     try { localStorage.setItem(COLOR_KEY, hex) } catch { /* ignore */ }
+  }
+
+  const handleHexInput = (value: string) => {
+    const upper = value.toUpperCase().replace(/[^0-9A-F]/g, '')
+    setHexInput(upper)
+    if (upper.length === 6) setColor('#' + upper)
   }
 
   const handleLogoUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -517,9 +525,19 @@ export default function BillOfSaleGenerator() {
               type="color"
               value={brandColor}
               onChange={e => setColor(e.target.value)}
-              className="w-8 h-8 rounded cursor-pointer border border-gray-200 dark:border-gray-600 p-0.5 bg-white dark:bg-[#1e293b]"
+              className="w-8 h-8 rounded cursor-pointer border border-gray-200 dark:border-gray-600 p-0.5 bg-white dark:bg-[#1e293b] shrink-0"
             />
-            <span className="text-sm font-mono text-gray-600 dark:text-gray-400">{brandColor.toUpperCase()}</span>
+            <div className="flex items-center">
+              <span className="text-sm font-mono text-gray-400 select-none">#</span>
+              <input
+                type="text"
+                value={hexInput}
+                onChange={e => handleHexInput(e.target.value)}
+                maxLength={6}
+                placeholder="16A34A"
+                className={`w-[72px] text-sm font-mono px-1.5 py-1 rounded border bg-white dark:bg-[#0f172a] text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 uppercase ${hexInput.length === 6 ? 'border-green-500 focus:ring-green-500' : hexInput.length > 0 ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 dark:border-gray-600 focus:ring-green-500'}`}
+              />
+            </div>
           </div>
 
           {/* Logo Upload */}
