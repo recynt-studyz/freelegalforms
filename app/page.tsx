@@ -17,23 +17,23 @@ export const metadata: Metadata = {
 const faqs: FaqItem[] = [
   {
     q: 'How do I create a professional invoice for free?',
-    a: 'Use this free invoice generator — fill in your business information, client details, and line items. The tool automatically calculates subtotals, taxes, and discounts, then generates a professional PDF invoice you can download instantly. No signup required.',
+    a: 'Use this free invoice generator — fill in your business information, client details, and line items. The tool automatically calculates subtotals, taxes, and discounts, then generates a professional PDF invoice you can download instantly. No signup required, no account creation, and no software to install. The entire process takes about two minutes and produces a PDF indistinguishable from invoices created with expensive accounting software.',
   },
   {
     q: 'Is this invoice generator really free with no watermarks?',
-    a: "Yes, completely free. Your PDF invoice downloads with no watermarks, no branding from us, and no hidden fees. The invoice looks exactly like a professional invoice you'd create with paid software, because all generation happens in your browser.",
+    a: "Yes, completely free. Your PDF invoice downloads with no watermarks, no branding from us, and no hidden fees. The invoice looks exactly like a professional invoice you'd create with paid software, because all generation happens in your browser using JavaScript. We don't charge for downloads, don't limit the number of invoices you can create, and don't require a subscription. The tool is supported by advertising, not by charging users.",
   },
   {
     q: 'What information should an invoice include?',
-    a: 'A professional invoice should include your business name and contact information, client details, a unique invoice number, invoice date and due date, itemized line items with descriptions and amounts, applicable taxes or discounts, payment terms (e.g., Net 30), and total amount due.',
+    a: 'A professional invoice should include your business name and contact information, the client\'s name and contact details, a unique invoice number, invoice date and payment due date, itemized line items with clear descriptions, quantities, and unit rates, any applicable discounts, the tax rate and calculated tax amount, payment terms (e.g., Net 30), the total amount due, and your preferred payment method or instructions. Missing any of these elements can delay payment or create disputes. The invoice number is especially important — it lets you and your client uniquely identify the document for accounting and follow-up purposes.',
   },
   {
     q: 'How do I add tax to my invoice?',
-    a: "Enter your tax rate percentage in the Tax Rate field. The invoice generator automatically calculates the tax amount based on your subtotal after any discount is applied, and adds it to your total. The tax line appears separately on the invoice so it's clearly itemized for your client.",
+    a: "Enter your tax rate percentage in the Tax Rate field. The invoice generator automatically calculates the tax amount based on your subtotal after any discount is applied, and adds it to your total. The tax line appears separately on the invoice so it's clearly itemized for your client. Note that sales tax applicability varies significantly by state and by the type of service or product — in many states, professional services are not subject to sales tax while physical goods are. Verify your specific tax obligations with your state revenue department or a tax professional before adding tax to client invoices.",
   },
   {
     q: 'Can I save and reuse my invoice template?',
-    a: "Yes. Your invoice details are automatically saved to your browser's local storage, so your business information, client details, and preferences are remembered when you return. Your data never leaves your device — everything is stored locally on your computer.",
+    a: "Yes. Your invoice details are automatically saved to your browser's local storage as you type, so your business information, client details, and preferences are remembered when you return. You can also explicitly save named templates using the Saved Templates feature — save your standard billing rates, your business information, or a complete template for a recurring client and load it with one click. Your data never leaves your device — everything is stored locally on your computer and is never transmitted to any server.",
   },
 ]
 
@@ -135,6 +135,64 @@ export default function Home() {
             <p className="text-sm text-green-800 dark:text-green-400 leading-relaxed">
               A professional invoice is a legally binding document and serves as formal written notice of payment owed between parties. Proper invoices include unique invoice numbers for your records, clearly itemized services or goods with quantities and rates, applicable taxes, and payment terms that establish the due date, governing payment obligations, and any late payment penalties. A well-drafted invoice — like any enforceable commercial agreement — includes complete contact information, a clear description of services rendered, and the total amount due. This free invoice generator creates PDF invoices that meet professional standards — the same format used by established businesses and independent contractors. All invoice data is processed entirely in your browser and is never transmitted to any server.
             </p>
+          </div>
+
+          {/* Supporting Content */}
+          <div className="mb-10 space-y-10">
+
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">How Invoice Calculation Works</h2>
+              <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                <p>An invoice is a formal payment request that documents goods or services rendered and creates a legal obligation for payment. Modern invoice calculation follows a precise sequence: each line item multiplies a quantity by a unit rate to produce a line total. All line totals are summed to produce the <strong className="text-gray-900 dark:text-white">subtotal</strong>. If a discount applies, it is deducted from the subtotal as a percentage reduction. The tax rate is then applied to the discounted subtotal — not the original subtotal — ensuring tax is only charged on the net amount. Finally, the tax amount is added back to produce the <strong className="text-gray-900 dark:text-white">Total Due</strong>.</p>
+                <p>The formula is: <code className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-xs font-mono">Total = (Subtotal × (1 − Discount%)) × (1 + Tax%)</code></p>
+                <p>Invoice numbering is critical for your accounting records. Each invoice should carry a unique sequential identifier — such as INV-001, INV-002, or 2025-047 — that lets you track which invoices are paid, outstanding, or overdue. Payment terms like <strong className="text-gray-900 dark:text-white">Net 30</strong> mean the client must pay within 30 calendar days of the invoice date. <strong className="text-gray-900 dark:text-white">Due on Receipt</strong> means immediate payment is expected. Setting clear terms on the invoice itself — rather than in a separate email — reduces misunderstandings and gives you written documentation of agreed payment expectations.</p>
+                <p>This generator handles all calculations automatically. As you add line items the subtotal updates in real time. Adjust the tax or discount rate and the total recalculates immediately. The invoice counter increments each time you generate a PDF, so sequential numbering is maintained without manual tracking.</p>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Worked Example: Freelance Web Design Invoice</h2>
+              <div className="bg-gray-50 dark:bg-[#1e293b] rounded-xl p-5 space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                <p>Sarah Chen is a freelance web designer billing her client, <strong className="text-gray-900 dark:text-white">Momentum Marketing LLC</strong>, for a completed website project. She has three line items:</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs font-mono border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <th className="text-left py-1.5 pr-4 text-gray-500 font-semibold">Description</th>
+                        <th className="text-right py-1.5 pr-4 text-gray-500 font-semibold">Qty</th>
+                        <th className="text-right py-1.5 pr-4 text-gray-500 font-semibold">Rate</th>
+                        <th className="text-right py-1.5 text-gray-500 font-semibold">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                      <tr><td className="py-1.5 pr-4 text-gray-700 dark:text-gray-300">Website design &amp; development</td><td className="text-right pr-4">40 hrs</td><td className="text-right pr-4">$80.00</td><td className="text-right">$3,200.00</td></tr>
+                      <tr><td className="py-1.5 pr-4 text-gray-700 dark:text-gray-300">Content migration &amp; setup</td><td className="text-right pr-4">8 hrs</td><td className="text-right pr-4">$80.00</td><td className="text-right">$640.00</td></tr>
+                      <tr><td className="py-1.5 pr-4 text-gray-700 dark:text-gray-300">Monthly maintenance retainer</td><td className="text-right pr-4">1</td><td className="text-right pr-4">$350.00</td><td className="text-right">$350.00</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div className="text-xs font-mono bg-white dark:bg-[#0f172a] rounded-lg p-3 border border-gray-200 dark:border-gray-700 space-y-1">
+                  <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>$4,190.00</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">Discount (5% early-completion)</span><span>−$209.50</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">Discounted subtotal</span><span>$3,980.50</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">Tax (8.5%)</span><span>+$338.34</span></div>
+                  <div className="flex justify-between font-bold border-t border-gray-200 dark:border-gray-700 pt-1 mt-1"><span>Total Due</span><span>$4,318.84</span></div>
+                </div>
+                <p>Sarah sets payment terms to Net 30, dates the invoice May 1st (due May 31st), and assigns invoice number <strong className="text-gray-900 dark:text-white">INV-2025-047</strong>. The clearly itemized format lets Momentum Marketing verify each charge independently. The unique invoice number makes follow-up simple if the payment doesn&apos;t arrive by the due date — Sarah can reference INV-2025-047 specifically in any payment reminder email.</p>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Key Factors for Professional Invoicing</h2>
+              <ul className="space-y-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                <li><strong className="text-gray-900 dark:text-white">Unique invoice numbers.</strong> Sequential numbering (INV-001, INV-002...) is essential for matching payments to invoices, tracking outstanding balances, and maintaining audit-ready records. Gaps in numbering can raise questions during a tax audit. Use a consistent format and never reuse an invoice number, even if the original invoice was voided.</li>
+                <li><strong className="text-gray-900 dark:text-white">Explicit payment terms.</strong> Net 30 is standard for B2B transactions but Net 15 or Due on Receipt is appropriate for smaller projects or new clients with no payment history. State your terms on the invoice itself — not just in the accompanying email — so the obligation is documented in the invoice record.</li>
+                <li><strong className="text-gray-900 dark:text-white">Accurate tax rates.</strong> Sales tax applicability varies by state and by service type. In many states, professional services (design, consulting, legal) are not subject to sales tax while physical goods are. Never add tax without verifying your specific obligations — incorrectly charging sales tax creates liability, and failing to collect required sales tax creates its own liability.</li>
+                <li><strong className="text-gray-900 dark:text-white">Specific line item descriptions.</strong> Vague line items like "Services — $5,000" delay payment and invite disputes. Specific descriptions like "Website redesign (40 hours × $80/hr)" give clients confidence that charges are legitimate and make it easy to approve payment quickly.</li>
+                <li><strong className="text-gray-900 dark:text-white">Late payment policy.</strong> Including a late fee clause in your Notes/Terms field (e.g., "A 1.5% monthly late fee applies to balances outstanding beyond the due date") creates a contractual basis for charging late fees and incentivizes timely payment without requiring a separate agreement.</li>
+              </ul>
+            </div>
+
           </div>
 
           <div className="pb-10">
